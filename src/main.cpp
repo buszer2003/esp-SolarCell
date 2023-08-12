@@ -1,6 +1,6 @@
 // ADS1115, ACS712-20A
 
-const char version[6] = "1.2.0";
+const char version[6] = "1.3.0";
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
@@ -23,9 +23,6 @@ float R1 = 6005.00; // resistance of R1 (10K)
 float R2 = 1000.00; // resistance of R2 (1K)
 int val = 0;
 long sum = 0;
-const float battery_max = 14.80;
-const float battery_min = 10.10;
-float output_percent = 0.0;
 unsigned long time_getC;
 unsigned long getBattDelay;
 unsigned long publishMQTT;
@@ -64,16 +61,6 @@ void getBatteryInfo() {
 
     if (Vin < 0.1) {
         Vin = 0.00;
-	}
-
-    output_percent = ((Vin - battery_min) / (battery_max - battery_min)) * 100;
-
-    if (output_percent > 100) {
-        output_percent = 100;
-	}
-
-    if (output_percent < 0) {
-        output_percent = 0;
 	}
 }
 
@@ -145,7 +132,6 @@ void loop() {
             DynamicJsonDocument docInfo(64);
             String MQTT_STR;
             docInfo["volt"] = String(Vin, 2);
-            docInfo["percent"] = String(output_percent, 1);
             docInfo["current"] = String(current, 2);
             serializeJson(docInfo, MQTT_STR);
             client.publish("esp/solarcell/chart", MQTT_STR.c_str());
@@ -156,7 +142,6 @@ void loop() {
             DynamicJsonDocument docInfo(128);
             String MQTT_STR;
             docInfo["volt"] = String(Vin, 2);
-            docInfo["percent"] = String(output_percent, 1);
             docInfo["current"] = String(current, 2);
             docInfo["rssi"] = String(WiFi.RSSI());
             docInfo["uptime"] = String(millis()/1000);
