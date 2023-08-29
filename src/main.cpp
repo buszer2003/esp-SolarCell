@@ -1,6 +1,8 @@
 // ADS1115, ACS712-20A
 
-const char version[6] = "1.3.0";
+const char version[7] = "1.3.01";
+const char built_date[9] = "20230829";
+const char built_time[5] = "2047";
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
@@ -64,19 +66,6 @@ void getBatteryInfo() {
 	}
 }
 
-void reconnect() {
-    if (!client.connected()) {
-        Serial.print("Attempting MQTT connection...");
-        if (client.connect("ESP8266Client")) {
-            Serial.println("connected");
-            client.subscribe("esp/weather/get");
-        } else {
-            Serial.print("failed, rc=");
-            Serial.print(client.state());
-        }
-    }
-}
-
 void connectToWifi() {
 	Serial.println("Connecting to Wi-Fi...");
 	if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
@@ -97,7 +86,7 @@ void setup() {
     connectToWifi();
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Hi! I am ESP8266. ESP-SolarCell\nVersion: " + String(version));
+    request->send(200, "text/plain", "Hi! I am ESP8266. ESP-SolarCell\nVersion: " + String(version)  + "\nBuilt Date: " + String(built_date) + "\nBuilt Time: " + String(built_time));
 	});
 	
 	AsyncElegantOTA.begin(&server);         // Start ElegantOTA
@@ -122,32 +111,25 @@ void loop() {
 		getBattDelay = millis();
     }
 
-    if (!client.connected()) {
-		if (millis() - reconnTime > 1000) {
-			reconnect();
-			reconnTime = millis();
-		}
-	} else {
-        if (millis() - publishMQTT > 60000) {
-            DynamicJsonDocument docInfo(64);
-            String MQTT_STR;
-            docInfo["volt"] = String(Vin, 2);
-            docInfo["current"] = String(current, 2);
-            serializeJson(docInfo, MQTT_STR);
-            client.publish("esp/solarcell/chart", MQTT_STR.c_str());
-            publishMQTT = millis();
-        }
+    if (millis() - publishMQTT > 60000) {
+        DynamicJsonDocument docInfo(64);
+        String MQTT_STR;
+        docInfo["volt"] = String(Vin, 2);
+        docInfo["current"] = String(current, 2);
+        serializeJson(docInfo, MQTT_STR);
+        client.publish("esp/solarcell/log", MQTT_STR.c_str());
+        publishMQTT = millis();
+    }
 
-        if (millis() - mqttESPinfo > 1000) {
-            DynamicJsonDocument docInfo(128);
-            String MQTT_STR;
-            docInfo["volt"] = String(Vin, 2);
-            docInfo["current"] = String(current, 2);
-            docInfo["rssi"] = String(WiFi.RSSI());
-            docInfo["uptime"] = String(millis()/1000);
-            serializeJson(docInfo, MQTT_STR);
-            client.publish("esp/solarcell/info", MQTT_STR.c_str());
-            mqttESPinfo = millis();
-        }
+    if (millis() - mqttESPinfo > 1000) {
+        DynamicJsonDocument docInfo(128);
+        String MQTT_STR;
+        docInfo["volt"] = String(Vin, 2);
+        docInfo["current"] = String(current, 2);
+        docInfo["rssi"] = String(WiFi.RSSI());
+        docInfo["uptime"] = String(millis()/1000);
+        serializeJson(docInfo, MQTT_STR);
+        client.publish("esp/solarcell/info", MQTT_STR.c_str());
+        mqttESPinfo = millis();
     }
 }

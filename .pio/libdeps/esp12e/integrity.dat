@@ -1,0 +1,8 @@
+.\lib\AsyncElegantOTA.zip
+.\lib\ESPAsyncWebServer.zip
+SPI
+.\lib\Adafruit_ADS1X15
+drk/PubSubClient@^2.8.0
+adafruit/Adafruit BusIO@^1.13.2
+.\lib\ESPAsyncTCP.zip
+bblanchon/ArduinoJson@^6.19.4
