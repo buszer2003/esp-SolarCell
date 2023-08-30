@@ -1,3 +1,3 @@
 Import("env")
 
-env.Replace(PROGNAME="firmware_v%s" % env.GetProjectOption("custom_prog_version"))
+env.Replace(PROGNAME="fw_esp-SolarCell_v%s" % env.GetProjectOption("custom_prog_version"))
